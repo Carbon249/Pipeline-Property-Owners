@@ -1,0 +1,233 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --accent: #e94560; --accent2: #f5a623; --accent3: #2ecc71; --accent4: #9b59b6;
+  --text: #f0f0f0; --text-muted: #8a8a9a; --card-bg: #1e1e32; --card-border: rgba(255,255,255,0.07);
+}
+body { font-family: 'DM Sans', sans-serif; background: #13131f; color: var(--text); min-height: 100vh; }
+.app { padding: 20px 16px 32px; }
+.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+.header-title { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+.header-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; font-family: 'DM Mono', monospace; }
+.stats { display: flex; gap: 16px; }
+.stat { text-align: right; }
+.stat-n { font-size: 20px; font-weight: 600; font-family: 'DM Mono', monospace; }
+.stat-l { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; align-items: start; }
+.column { background: rgba(255,255,255,0.03); border: 0.5px solid rgba(255,255,255,0.07); border-radius: 14px; overflow: hidden; }
+.col-header { padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; border-bottom: 0.5px solid rgba(255,255,255,0.06); }
+.col-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; }
+.col-count { font-size: 11px; font-family: 'DM Mono', monospace; background: rgba(255,255,255,0.1); padding: 2px 7px; border-radius: 20px; color: var(--text-muted); }
+.col-new .col-title { color: #64b5f6; } .col-contacted .col-title { color: var(--accent2); } .col-responded .col-title { color: var(--accent3); } .col-closed .col-title { color: var(--accent4); }
+.col-body { padding: 10px; min-height: 120px; display: flex; flex-direction: column; gap: 8px; }
+.col-body.drag-over { background: rgba(255,255,255,0.04); border-radius: 8px; }
+.card { background: var(--card-bg); border: 0.5px solid var(--card-border); border-radius: 10px; padding: 11px; cursor: grab; transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; }
+.card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.4); border-color: rgba(255,255,255,0.14); }
+.card.dragging { opacity: 0.4; cursor: grabbing; }
+.card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; margin-bottom: 4px; }
+.card-name { font-size: 12.5px; font-weight: 500; line-height: 1.3; flex: 1; }
+.score-pill { font-size: 10px; font-family: 'DM Mono', monospace; font-weight: 500; padding: 2px 6px; border-radius: 20px; flex-shrink: 0; margin-top: 1px; }
+.s10 { background: rgba(46,204,113,0.2); color: #2ecc71; } .s9 { background: rgba(52,152,219,0.2); color: #52aae8; } .s8 { background: rgba(245,166,35,0.2); color: #f5a623; } .s7 { background: rgba(231,76,60,0.2); color: #e74c3c; }
+.card-loc { font-size: 10.5px; color: var(--text-muted); margin-bottom: 5px; }
+.card-url a { font-size: 10px; color: #7b9cda; font-family: 'DM Mono', monospace; text-decoration: none; }
+.card-url a:hover { color: #a8c4f8; }
+.card-url span { font-size: 10px; color: #555570; font-family: 'DM Mono', monospace; }
+.card-tags { display: flex; flex-wrap: wrap; gap: 3px; margin: 5px 0; }
+.tag { font-size: 9.5px; padding: 1px 5px; border-radius: 4px; }
+.tag-weak { background: rgba(245,166,35,0.12); color: #c9912c; } .tag-group { background: rgba(46,204,113,0.12); color: #27a85a; } .tag-owner { background: rgba(155,89,182,0.12); color: #9b59b6; }
+.card-angle { font-size: 10.5px; color: #8a8aaa; line-height: 1.4; margin-top: 5px; font-style: italic; border-top: 0.5px solid rgba(255,255,255,0.05); padding-top: 5px; }
+.card-note-area { margin-top: 7px; border-top: 0.5px solid rgba(255,255,255,0.05); padding-top: 7px; }
+.note-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 3px; }
+.note-input { width: 100%; background: rgba(255,255,255,0.04); border: 0.5px solid rgba(255,255,255,0.08); border-radius: 6px; color: var(--text); font-size: 10.5px; font-family: 'DM Sans', sans-serif; padding: 5px 7px; resize: none; outline: none; min-height: 46px; line-height: 1.5; transition: border-color 0.15s; }
+.note-input:focus { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.07); }
+.note-input::placeholder { color: #555570; }
+.move-btns { display: flex; gap: 3px; margin-top: 7px; flex-wrap: wrap; }
+.move-btn { font-size: 9.5px; padding: 2px 7px; border-radius: 5px; border: 0.5px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: var(--text-muted); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.12s, color 0.12s; }
+.move-btn:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+.move-btn.primary { background: rgba(233,69,96,0.15); color: var(--accent); border-color: rgba(233,69,96,0.3); }
+.move-btn.primary:hover { background: rgba(233,69,96,0.28); }
+.empty-col { text-align: center; padding: 20px 12px; color: #44445a; font-size: 11px; }
+</style>
+
+<div class="app">
+  <div class="header">
+    <div>
+      <div class="header-title">NC Mountains — Outreach Tracker</div>
+      <div class="header-sub">25 prospects · drag cards or use move buttons · notes auto-save</div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-n">25</div><div class="stat-l">prospects</div></div>
+      <div class="stat"><div class="stat-n" id="active-stat" style="color:var(--accent2)">0</div><div class="stat-l">contacted</div></div>
+      <div class="stat"><div class="stat-n" id="responded-stat" style="color:var(--accent3)">0</div><div class="stat-l">responded</div></div>
+    </div>
+  </div>
+  <div class="board" id="board">
+    <div class="column col-new" ondragover="ev(event)" ondrop="drop(event,'new')">
+      <div class="col-header"><span class="col-title">New</span><span class="col-count" id="cnt-new">0</span></div>
+      <div class="col-body" id="body-new"></div>
+    </div>
+    <div class="column col-contacted" ondragover="ev(event)" ondrop="drop(event,'contacted')">
+      <div class="col-header"><span class="col-title">Contacted</span><span class="col-count" id="cnt-contacted">0</span></div>
+      <div class="col-body" id="body-contacted"></div>
+    </div>
+    <div class="column col-responded" ondragover="ev(event)" ondrop="drop(event,'responded')">
+      <div class="col-header"><span class="col-title">Responded</span><span class="col-count" id="cnt-responded">0</span></div>
+      <div class="col-body" id="body-responded"></div>
+    </div>
+    <div class="column col-closed" ondragover="ev(event)" ondrop="drop(event,'closed')">
+      <div class="col-header"><span class="col-title">Closed / Pass</span><span class="col-count" id="cnt-closed">0</span></div>
+      <div class="col-body" id="body-closed"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STAGES = ['new','contacted','responded','closed'];
+const STAGE_LABELS = {new:'New',contacted:'Contacted',responded:'Responded',closed:'Closed'};
+
+const PROSPECTS = [
+  {id:'p1',score:10,name:'Blue Ridge Mountain Lodge',owner:'Mike & Jennifer Lin (CA)',location:'Banner Elk, NC — 9 BR / sleeps 25',url:'blueridgemtnlodge.com',hasUrl:true,
+   tags:[{t:'remote CA owners',c:'owner'},{t:'Leadpages site',c:'weak'},{t:'no inquiry flow',c:'weak'},{t:'family reunion',c:'group'}],
+   angle:'Remote owners managing 9BR from California with zero digital infrastructure. Pitch operational relief: guest comms, local partnerships, inquiry follow-up.'},
+  {id:'p2',score:10,name:'White Fence Farm Rentals',owner:'Denise & Fulton Lovin',location:'Boone/Trade TN border — 105 acres, barn 80–100',url:'whitefencefarmrentals.com',hasUrl:true,
+   tags:[{t:'call-only booking',c:'weak'},{t:'no online calendar',c:'weak'},{t:'weddings & retreats',c:'group'},{t:'named owners',c:'owner'}],
+   angle:'Barn seats 100 with zero booking flow. Direct booking + event planner outreach could double inquiries overnight.'},
+  {id:'p3',score:9,name:'Heritage Hill Cabins',owner:'Small operator, Valle Crucis',location:'Valle Crucis, NC — 5-cabin cluster',url:'heritagehillcabins.com',hasUrl:true,
+   tags:[{t:'5-cabin cluster',c:'group'},{t:'basic WordPress',c:'weak'},{t:'no group flow',c:'weak'},{t:'farm setting',c:'group'}],
+   angle:'5 private cabins on a farm — perfect group retreat setup nobody in that market knows exists.'},
+  {id:'p4',score:9,name:'NewlandNest',owner:'Owner visible on site',location:'Banner Elk/Newland — 7 BR + 4 BR properties',url:'newlandnest.com',hasUrl:true,
+   tags:[{t:'anti-platform stated',c:'owner'},{t:'direct booking focus',c:'owner'},{t:'minimal SEO',c:'weak'},{t:'no event angle',c:'weak'}],
+   angle:'Already committed to direct booking but has almost no digital muscle to support it. Help them actually get found.'},
+  {id:'p5',score:8,name:'Deerwood Retreat',owner:'Manager: Michael H.',location:'Seven Devils, NC — 3 BR / sleeps 10',url:'deerwoodretreat.com',hasUrl:true,
+   tags:[{t:'own site exists',c:'owner'},{t:'routes to CCR',c:'weak'},{t:'fairy garden / unique',c:'group'},{t:'paying fees',c:'weak'}],
+   angle:'Has own website but all bookings route to Carolina Cabin Rentals. Unique property features never marketed.'},
+  {id:'p6',score:8,name:'Buffalo Junction Properties',owner:'Sue (email on site)',location:'Lake Lure / Rumbling Bald — 14 properties, sleeps 8–16',url:'lakelurevacationproperties.com',hasUrl:true,
+   tags:[{t:'reunion / retreat',c:'group'},{t:'post-Helene rebuild',c:'weak'},{t:'lake reopening 2026',c:'group'},{t:'small operator',c:'owner'}],
+   angle:'Lake Lure reopens May 2026 — perfect moment to rebuild visibility before competitors. She needs marketing help now.'},
+  {id:'p7',score:8,name:'Beulahland Cabins',owner:'Chris Hodges (named on site)',location:'Boone, NC — 5 mi from Blue Ridge Pkwy',url:'beulahlandcabins.com',hasUrl:true,
+   tags:[{t:'owner named',c:'owner'},{t:'dated website',c:'weak'},{t:'no direct calendar',c:'weak'},{t:'personal pride voice',c:'owner'}],
+   angle:'Chris is personally invested but not tech-savvy. Help him modernize without losing what makes the property feel personal.'},
+  {id:'p8',score:8,name:'APPsolute Heaven',owner:'Owner visible via listing',location:'Banner Elk, NC — 4-season retreat, hot tub',url:'Platform only (VRBO/Airbnb)',hasUrl:false,
+   tags:[{t:'no direct website',c:'weak'},{t:'100% platform fees',c:'weak'},{t:'4-season retreat name',c:'group'},{t:'no direct presence',c:'weak'}],
+   angle:'"4-season retreat" paying full platform fees with no direct booking site. One site pays for itself in a booking.'},
+  {id:'p9',score:8,name:'60-Acre Mtn Top Retreat',owner:'Owner visible via listing',location:'Elk Park, NC (near Banner Elk) — 60 acres',url:'Platform only (Travelocity/VRBO)',hasUrl:false,
+   tags:[{t:'60-acre estate',c:'group'},{t:'no direct site',c:'weak'},{t:'no event positioning',c:'weak'},{t:'retreat potential',c:'group'}],
+   angle:'60 mountain acres with zero retreat/wedding/event positioning. Invisible to the audiences that would pay most.'},
+  {id:'p10',score:7,name:'Abundant Acres Retreat',owner:'Owner visible via listing',location:'Beech Mountain, NC — sleeps 9, near ski',url:'Platform only (Travelocity)',hasUrl:false,
+   tags:[{t:'"retreat" in name',c:'group'},{t:'no direct site',c:'weak'},{t:'no retreat marketing',c:'weak'},{t:'platform-only',c:'weak'}],
+   angle:'Named a retreat but marketed like a ski cabin. Help retreat organizers actually find and book it directly.'},
+  {id:'p11',score:9,name:'Doublehead Mountain Retreat',owner:'Owner: local NC native + wife from NY (FL-based)',location:'Newland, NC — 100+ acres, cabin + pond',url:'facebook.com/doubleheadmountainretreat',hasUrl:true,
+   tags:[{t:'100-acre estate',c:'group'},{t:'named owners',c:'owner'},{t:'platform-only',c:'weak'},{t:'no direct site',c:'weak'}],
+   angle:'100+ private acres with caves, waterfalls, trout streams — extraordinary property with zero direct presence. FB points to Airbnb. Pitch a standalone site and retreat group positioning.'},
+  {id:'p12',score:9,name:'Linville River Log Cabins',owner:'Small owner-operator',location:'Linville/Crossnore, NC — riverfront cabins',url:'linvilleriverlogcabins.com',hasUrl:true,
+   tags:[{t:'owner-run site',c:'owner'},{t:'romantic/couples focus',c:'weak'},{t:'no group positioning',c:'weak'},{t:'direct booking push',c:'owner'}],
+   angle:'Own direct booking site but marketed only to couples. No group/retreat angle despite riverside location and multiple cabins that could be rented together.'},
+  {id:'p13',score:8,name:'Cabin in Asheville (Brea & David)',owner:'Brea & David (named on site)',location:'Fairview/Gerton, NC — 3 properties near Asheville',url:'cabininasheville.com',hasUrl:true,
+   tags:[{t:'named owners',c:'owner'},{t:'call to book',c:'weak'},{t:'no online calendar',c:'weak'},{t:'3 properties',c:'group'}],
+   angle:'Brea and David are personally invested — "call Brea @ 828 348 5488." Classic underdeveloped operation with own site but no booking flow or event positioning.'},
+  {id:'p14',score:8,name:'Asheville Vacation Cabins (Suzanne)',owner:'Suzanne Hulme (email on site)',location:'Asheville area — 2 cabins (Sasha\'s + Suzie\'s)',url:'ashevillevacationcabins.com',hasUrl:true,
+   tags:[{t:'owner named + email',c:'owner'},{t:'book direct push',c:'owner'},{t:'older-style site',c:'weak'},{t:'no event angle',c:'weak'}],
+   angle:'Suzanne is clearly hands-on and motivated to book direct (says so prominently) but website is outdated, no calendar, no group positioning.'},
+  {id:'p15',score:8,name:'Wheel of Bliss Retreat',owner:'Small owner-operator',location:'Hot Springs, NC — 63 acres, 6 BR / sleeps 16+',url:'wheelofbliss.org',hasUrl:true,
+   tags:[{t:'retreat center',c:'group'},{t:'spiritual/yoga market',c:'group'},{t:'own website',c:'owner'},{t:'weak SEO',c:'weak'}],
+   angle:'Established retreat center with strong event product but weak direct booking funnel and minimal SEO. Booking still routed through Airbnb. Huge opportunity for retreat planner outreach.'},
+  {id:'p16',score:8,name:'"The Iveys" — Private Mtn Getaway',owner:'The Ivey family (named in reviews)',location:'Watauga/Banner Elk area — 6 BR / sleeps 16',url:'Platform only (VRBO/Airbnb)',hasUrl:false,
+   tags:[{t:'named family owners',c:'owner'},{t:'9.8/10 reviews',c:'group'},{t:'no direct site',c:'weak'},{t:'event-capable',c:'group'}],
+   angle:'Family owners with a 9.8 rating and a property that seats 12 at the dining table. Reviews name them personally. No direct site — 100% platform dependent.'},
+  {id:'p17',score:8,name:'Blissful Mountain Retreat (Boone)',owner:'Private host (per listing)',location:'Boone, NC — 9 BR / sleeps 16–20',url:'Platform only (VRBO/Airbnb)',hasUrl:false,
+   tags:[{t:'9 bedrooms',c:'group'},{t:'sleeps 20',c:'group'},{t:'no direct site',c:'weak'},{t:'platform-only',c:'weak'}],
+   angle:'9-bedroom, 20-person capacity in Boone with no direct booking site whatsoever. Ideal for reunion/retreat groups but invisible to them.'},
+  {id:'p18',score:8,name:'WNC Vacation Rentals (Pristine)',owner:'Pristine Vacation Rentals — small local operator',location:'Burnsville, NC — multiple cabins',url:'wncvacationrentals.com',hasUrl:true,
+   tags:[{t:'small local operator',c:'owner'},{t:'20+ yrs experience',c:'owner'},{t:'dated website',c:'weak'},{t:'no retreat angle',c:'weak'}],
+   angle:'Small 20-year local operator with multiple cabins and "neighbors helping neighbors" ethos. Website is dated, no retreat positioning, no event planner relationships.'},
+  {id:'p19',score:7,name:'Boone/Banner Elk 3BR "Herb\'s House"',owner:'Personal owner (named cabin after family member)',location:'Foscoe area, NC — 3 BR + basement apt / sleeps 7+',url:'Platform only (VRBO)',hasUrl:false,
+   tags:[{t:'multi-unit owner',c:'owner'},{t:'personal story',c:'owner'},{t:'VRBO only',c:'weak'},{t:'3 properties',c:'group'}],
+   angle:'Owner personally names the cabin after a family member and manages 3 adjacent VRBO listings. Classic engaged owner who could benefit from a direct site and group positioning.'},
+  {id:'p20',score:7,name:'Mars Hill Cabin Retreat',owner:'Owner visible via listing',location:'Mars Hill, NC — 3 BR + bunk / sleeps 10, near Wolf Ridge',url:'Platform only (Airbnb/VRBO)',hasUrl:false,
+   tags:[{t:'sleeps 10',c:'group'},{t:'retreat in name',c:'group'},{t:'no direct site',c:'weak'},{t:'new listing',c:'weak'}],
+   angle:'Uses "retreat" in the listing name, 10-guest capacity near Wolf Ridge ski — no direct presence, no retreat market outreach. Brand-new listing with 0 reviews.'},
+  {id:'p21',score:7,name:'Carolina Mountains Vacation Rentals (Laura)',owner:'Laura (named in reviews — Houfy host)',location:'Sugar Mountain, NC — condo lodge, 4 master suites',url:'Houfy platform',hasUrl:false,
+   tags:[{t:'named owner',c:'owner'},{t:'Houfy direct booking',c:'owner'},{t:'condo/lodge',c:'group'},{t:'no standalone site',c:'weak'}],
+   angle:'Owner Laura is already trying to go direct via Houfy but has no standalone site, no SEO, no event positioning. Help her build a real direct booking presence.'},
+  {id:'p22',score:7,name:'Linville Falls Cabins',owner:'Small operator (Linville Falls community)',location:'Linville Falls, NC — multiple small cabins',url:'linvillefalls.com',hasUrl:true,
+   tags:[{t:'small operator',c:'owner'},{t:'basic site',c:'weak'},{t:'couples focus only',c:'weak'},{t:'no group angle',c:'weak'}],
+   angle:'Own website but marketed only to couples and romantics. No group/retreat positioning despite stunning gorge location that retreat groups would love.'},
+  {id:'p23',score:7,name:'Bliss Farm & Retreat',owner:'Kelly (co-founder named on site)',location:'Barnardsville, NC — near Asheville',url:'blissfarmandretreat.com',hasUrl:true,
+   tags:[{t:'retreat center',c:'group'},{t:'named co-founder',c:'owner'},{t:'yoga/wellness focus',c:'group'},{t:'weak booking flow',c:'weak'}],
+   angle:'Established retreat center with a clear niche (yoga/wellness) but limited marketing reach and no event planner partnerships visible.'},
+  {id:'p24',score:7,name:'Asheville Country Cabins (Pete)',owner:'Pete (named in reviews)',location:'Near Asheville, NC — luxury cabins',url:'ashevillecountrycabins.com',hasUrl:true,
+   tags:[{t:'owner Pete named',c:'owner'},{t:'own website',c:'owner'},{t:'luxury product',c:'group'},{t:'small property count',c:'weak'}],
+   angle:'Pete is personally attentive (guests call him out by name) but running a luxury product on a basic site with no group/event positioning.'},
+  {id:'p25',score:7,name:'Doublehead Mountain Retreat (Newland)',owner:'NC native + wife (FL-based per VRBO bio)',location:'Frank/Newland, NC — 2 BR cabin, 100+ acres',url:'facebook.com/doubleheadmountainretreat',hasUrl:true,
+   tags:[{t:'100+ acres',c:'group'},{t:'named owners story',c:'owner'},{t:'platform-only booking',c:'weak'},{t:'Facebook page exists',c:'weak'}],
+   angle:'Incredible 100-acre property with waterfalls, caves, trout streams. Owners personally invested but route everything to platforms. Facebook page with 269 followers is their only owned presence.'},
+];
+
+let state = {};
+let dragging = null;
+
+async function loadState() {
+  try {
+    const r = await window.storage.get('kanban-v2-state');
+    if (r && r.value) state = JSON.parse(r.value);
+  } catch(e) {}
+  PROSPECTS.forEach(p => {
+    if (!state[p.id]) state[p.id] = { stage: 'new', note: '' };
+  });
+  render();
+}
+
+async function saveState() {
+  try { await window.storage.set('kanban-v2-state', JSON.stringify(state)); } catch(e) {}
+}
+
+function render() {
+  STAGES.forEach(s => {
+    const body = document.getElementById('body-' + s);
+    body.innerHTML = '';
+    const cards = PROSPECTS.filter(p => state[p.id].stage === s);
+    if (!cards.length) { body.innerHTML = '<div class="empty-col">Drop cards here</div>'; }
+    else { cards.forEach(p => body.appendChild(makeCard(p))); }
+    document.getElementById('cnt-' + s).textContent = cards.length;
+  });
+  updateStats();
+}
+
+function makeCard(p) {
+  const d = document.createElement('div');
+  d.className = 'card'; d.draggable = true; d.dataset.id = p.id;
+  d.ondragstart = e => { dragging = p.id; e.dataTransfer.effectAllowed = 'move'; d.classList.add('dragging'); };
+  d.ondragend = () => { dragging = null; d.classList.remove('dragging'); };
+  const sc = p.score>=10?'s10':p.score>=9?'s9':p.score>=8?'s8':'s7';
+  const tags = p.tags.map(t=>`<span class="tag tag-${t.c}">${t.t}</span>`).join('');
+  const cur = state[p.id].stage, idx = STAGES.indexOf(cur);
+  const prev = idx>0?STAGES[idx-1]:null, next = idx<STAGES.length-1?STAGES[idx+1]:null;
+  const prevBtn = prev?`<button class="move-btn" onclick="moveCard('${p.id}','${prev}')">← ${STAGE_LABELS[prev]}</button>`:'';
+  const nextBtn = next?`<button class="move-btn primary" onclick="moveCard('${p.id}','${next}')">${STAGE_LABELS[next]} →</button>`:'';
+  const urlHtml = p.hasUrl ? `<a href="https://${p.url}" target="_blank">${p.url}</a>` : `<span>${p.url}</span>`;
+  d.innerHTML = `
+    <div class="card-top"><div class="card-name">${p.name}</div><span class="score-pill ${sc}">${p.score}/10</span></div>
+    <div class="card-loc">${p.location}</div>
+    <div class="card-url">${urlHtml}</div>
+    <div class="card-tags">${tags}</div>
+    <div class="card-angle">${p.angle}</div>
+    <div class="card-note-area">
+      <div class="note-label">Notes</div>
+      <textarea class="note-input" placeholder="Contact info, dates, follow-ups..." onchange="updateNote('${p.id}',this.value)" onclick="this.parentElement.parentElement.style.cursor='default'" ondblclick="event.stopPropagation()">${state[p.id].note||''}</textarea>
+    </div>
+    <div class="move-btns">${prevBtn}${nextBtn}</div>`;
+  return d;
+}
+
+function moveCard(id, stage) { state[id].stage = stage; saveState(); render(); }
+function updateNote(id, val) { state[id].note = val; saveState(); }
+function ev(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+function drop(e, stage) { e.preventDefault(); if (dragging) { state[dragging].stage = stage; saveState(); render(); } }
+function updateStats() {
+  document.getElementById('active-stat').textContent = PROSPECTS.filter(p=>state[p.id]&&state[p.id].stage==='contacted').length;
+  document.getElementById('responded-stat').textContent = PROSPECTS.filter(p=>state[p.id]&&state[p.id].stage==='responded').length;
+}
+loadState();
+</script>
